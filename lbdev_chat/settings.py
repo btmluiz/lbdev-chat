@@ -51,8 +51,8 @@ INSTALLED_APPS = [
 
 ASGI_APPLICATION = 'lbdev_chat.asgi.application'
 
-if os.environ.get('REDIS_TLS_URL'):
-    REDIS_HOST = (os.environ.get('REDIS_TLS_URL'))
+if os.environ.get('REDIS_URL'):
+    REDIS_HOST = (os.environ.get('REDIS_URL'))
 else:
     REDIS_HOST = (os.environ.get('REDIS_HOST', 'channel_layer'), os.environ.get('REDIS_PORT', 6379))
 
