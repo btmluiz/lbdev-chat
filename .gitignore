@@ -3,6 +3,7 @@
 
 # ENVS
 .env*
+google-credentials.json
 
 # cache
 cache/**/
