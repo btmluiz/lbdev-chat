@@ -2,6 +2,7 @@
 .idea
 
 # ENVS
+.env
 .env*
 google-credentials.json
 
