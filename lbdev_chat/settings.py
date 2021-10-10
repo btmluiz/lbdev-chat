@@ -186,13 +186,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 if os.environ.get('GS_BUCKET_NAME'):
-    DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+    DEFAULT_FILE_STORAGE = 'lbdev_chat.storages.MediaGoogleCloudStorage'
     GS_BUCKET_NAME = os.environ.get('GS_BUCKET_NAME')
 
-    STATICFILES_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+    STATICFILES_STORAGE = 'lbdev_chat.storages.StaticGoogleCloudStorage'
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / '/static/'
+STATIC_ROOT = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
