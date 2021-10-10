@@ -51,11 +51,20 @@ INSTALLED_APPS = [
 
 ASGI_APPLICATION = 'lbdev_chat.asgi.application'
 
+if os.environ.get('REDIS_PASSWORD', 6379):
+    REDIS_HOST = ("redis://:{password}@{host}:{port}/0".format(
+        password=os.environ.get('REDIS_PASSWORD', 6379),
+        host=os.environ.get('REDIS_HOST', 'channel_layer'),
+        port=os.environ.get('REDIS_PORT', 6379)
+    ))
+else:
+    REDIS_HOST = (os.environ.get('REDIS_HOST', 'channel_layer'), os.environ.get('REDIS_PORT', 6379))
+
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [(os.environ.get('REDIS_HOST', 'channel_layer'), 6379)],
+            'hosts': [REDIS_HOST],
         }
     }
 }
