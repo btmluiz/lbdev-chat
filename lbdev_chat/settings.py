@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 ]
 
+AUTH_USER_MODEL = 'api.User'
+
 ASGI_APPLICATION = 'lbdev_chat.asgi.application'
 
 if os.environ.get('REDIS_URL'):
@@ -101,8 +103,7 @@ ROOT_URLCONF = 'lbdev_chat.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
-        ,
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -194,3 +195,18 @@ STATIC_ROOT = 'static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Email settings
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL")
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.environ.get("EMAIL_HOST")
+EMAIL_PORT = os.environ.get("EMAIL_PORT")
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
+EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL")
+
+# App Settings
+SITE_NAME = os.environ.get("SITE_NAME")
+COMPANY_NAME = os.environ.get("COMPANY_NAME")
+COMPANY_URL = os.environ.get("COMPANY_URL")
+EMAIL_VALIDATION_URL = os.environ.get('EMAIL_VALIDATION_URL')
