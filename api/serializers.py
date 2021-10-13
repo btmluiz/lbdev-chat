@@ -1,8 +1,14 @@
+import datetime
+
+from django.contrib.auth.password_validation import validate_password
+from django.utils import timezone
 from rest_framework import serializers
 
 from django.contrib.auth import authenticate
-from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
+from rest_framework.validators import UniqueValidator
+
+from api.models import User, ConfirmToken, PasswordRecoveryCode
 
 
 class DynamicFieldsModelSerializer(serializers.ModelSerializer):
@@ -26,13 +32,15 @@ class DynamicFieldsModelSerializer(serializers.ModelSerializer):
                 self.fields.pop(field_name)
 
 
-class LoginSerializer(serializers.Serializer):
+class ValidationSerializer(serializers.Serializer):
     def update(self, instance, validated_data):
         pass
 
     def create(self, validated_data):
         pass
 
+
+class LoginSerializer(ValidationSerializer):
     username = serializers.CharField(required=False, allow_blank=True)
     password = serializers.CharField(
         label=_('Password'),
@@ -74,6 +82,111 @@ class LoginSerializer(serializers.Serializer):
         return data
 
 
+class RegisterAccountSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(validators=[UniqueValidator(queryset=User.objects.all())])
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    password2 = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = User
+        fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name',)
+        extra_kwargs = {
+            'first_name': {'required': True},
+            'last_name': {'required': True}
+        }
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password2']:
+            raise serializers.ValidationError({"password": _("Password fields didn't match")})
+
+        return attrs
+
+    def create(self, validated_data):
+        user = User.objects.create(
+            username=validated_data['username'],
+            email=validated_data['email'],
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name']
+        )
+
+        user.set_password(validated_data['password'])
+        user.save()
+
+        user.send_validation_email()
+
+        return user
+
+
+class ConfirmAccountSerializer(ValidationSerializer):
+    token = serializers.CharField()
+
+    def validate(self, attrs):
+        try:
+            confirm_token = ConfirmToken.objects.get(token=attrs['token'], validated=False)
+
+            if not (timezone.now() - confirm_token.created) < datetime.timedelta(hours=3):
+                raise serializers.ValidationError({"token": "Expired token"})
+
+            self.instance = confirm_token
+            return attrs
+        except ConfirmToken.DoesNotExist:
+            raise serializers.ValidationError({"token": "Invalid token for email confirmation"})
+
+
+class AskPasswordRecoveryCodeSerializer(ValidationSerializer):
+    email = serializers.EmailField(required=True)
+
+    def validate(self, attrs):
+        try:
+            user = User.objects.get(email=attrs['email'])
+            password_code = PasswordRecoveryCode.objects.create(user=user)
+
+            self.instance = password_code
+
+            return attrs
+        except User.DoesNotExist:
+            raise serializers.ValidationError({'email': _('email not assign to a user')})
+
+
+class ValidatePasswordRecoveryCodeSerializer(ValidationSerializer):
+    code = serializers.CharField(max_length=6)
+
+    def validate(self, attrs):
+        try:
+            password_code = PasswordRecoveryCode.objects.get(code=attrs['code'])
+
+            if not (timezone.now() - password_code.created) < datetime.timedelta(hours=3):
+                password_code.delete()
+                raise serializers.ValidationError({"code": "Code expired"})
+
+            self.instance = password_code
+            return attrs
+        except PasswordRecoveryCode.DoesNotExist:
+            raise serializers.ValidationError({"token": "Invalid token"})
+
+
+class PasswordRecoverySerializer(ValidationSerializer):
+    code = serializers.CharField(max_length=6)
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    password2 = serializers.CharField(write_only=True, required=True)
+
+    def validate(self, attrs):
+        try:
+            password_code = PasswordRecoveryCode.objects.get(code=attrs['code'])
+
+            if not (timezone.now() - password_code.created) < datetime.timedelta(hours=3):
+                password_code.delete()
+                raise serializers.ValidationError({"code": "Code expired"})
+
+            password_code.delete()
+            self.instance = password_code.user
+            self.instance.set_password(attrs['password'])
+            self.instance.save()
+            return attrs
+        except PasswordRecoveryCode.DoesNotExist:
+            raise serializers.ValidationError({"token": "Invalid token"})
+
+
 class UserSerializer(DynamicFieldsModelSerializer):
     permissions = serializers.SerializerMethodField('list_permissions')
 
@@ -93,3 +206,13 @@ class UserSerializer(DynamicFieldsModelSerializer):
         model = User
         fields = ('id', 'username', 'email', 'first_name', 'last_name',
                   'is_active', 'is_staff', 'is_superuser', 'permissions')
+
+
+class LoginResponseSerializer(ValidationSerializer):
+    token = serializers.CharField()
+    data = UserSerializer()
+
+
+class ResponseSerializer(ValidationSerializer):
+    status = serializers.SlugField()
+    message = serializers.CharField()

@@ -20,7 +20,7 @@ services:
   migration:
     build: .
     env_file:
-      - .env.development
+      - .env.local
     command: sh -c "python manage.py makemigrations && python manage.py migrate"
     links:
       - db
@@ -33,7 +33,7 @@ services:
     ports:
       - "5433:5432"
     env_file:
-      - .env.development
+      - .env.local
     volumes:
       - ./cache/db_dev:/var/lib/postgresql/data
   channel_layer:

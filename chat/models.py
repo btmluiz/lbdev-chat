@@ -2,27 +2,26 @@ import uuid
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.contrib.auth.models import User
 from django.db import models
 
+from api.models import User, Model
 # Create your models here.
 
 
-class ChatSession(models.Model):
+class ChatSession(Model):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     online = models.BooleanField(default=False)
 
 
-class Chat(models.Model):
-    id = models.UUIDField(default=uuid.uuid4, primary_key=True)
+class Chat(Model):
     created_at = models.DateTimeField(auto_now_add=True)
     chat_key = models.UUIDField(default=uuid.uuid4, unique=True)
     members = models.ManyToManyField(to=User)
 
 
-class ChatHistory(models.Model):
+class ChatHistory(Model):
     sender = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     chat = models.ForeignKey(Chat, on_delete=models.CASCADE)
     content = models.TextField()
