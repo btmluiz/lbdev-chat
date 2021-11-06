@@ -35,6 +35,14 @@ To deploy this project create a `.env` file at the root of the project use the e
 
 ```
 
+after setup the `.env` use:
+
+```bash
+ docker-compose up -d
+```
+
+in the project root
+
 To deploy the client you can use [lbdev-chat-client](https://github.com/btmluiz/lbdev-chat-client)
 ## API Reference
 
