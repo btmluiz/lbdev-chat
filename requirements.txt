@@ -12,3 +12,4 @@ django-cors-headers~=3.10.0
 mysqlclient~=1.4.6
 django-storages~=1.9.1
 google-cloud-storage~=1.42.3
+twisted>=22.4.0rc1 # not directly required, pinned by Snyk to avoid a vulnerability
